@@ -1,0 +1,21 @@
+int main() {
+    int a, b, c; $@
+    int _sum=0;
+    a = 101 +202;//adding two numbers
+    b = 202 -101;/*subtracting two numbers*/
+    a++;
+    if(a==b)
+    {
+        c = a + b;
+    }
+    else
+    {
+        c = a - b;
+    }
+    printf("Sum of %d and %d is %d", a, b, c);
+    
+    int circle = 3 * a * b;
+    printf("Area of circle is %d", circle);
+    
+    return 0;
+}
