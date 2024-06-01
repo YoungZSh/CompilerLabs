@@ -179,10 +179,10 @@ int main()
 {
     string s;
     cout << "输入的文法" << endl;
-    for (int j = 0; j < 6; j++)
+    for (int j = 0; j < 4; j++)
         cout << Production[j] << endl;
     cout << "VT:" << endl;
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 3; i++)
         cout << vt[i] << " ";
     cout << endl;
     cout << "VN:" << endl;
