@@ -98,6 +98,9 @@ Content action[MAX][MAX];
 int Goto[MAX][MAX];
 map<string, set<char>> first;
 map<string, set<char>> follow;
+vector<string> result;
+int var_num = 0;
+string var_tmp;
 
 void make_item()
 {
@@ -770,6 +773,193 @@ void analyse(string src)
     }
 }
 
+void analyse_and_translate(string src)
+{
+    print("steps", "op-stack", "input", "operation", "state-stack", "ACTION", "GOTO");
+    vector<char> op_stack;
+    vector<int> st_stack;
+    vector<string> pl_stack;//记录place属性
+    src += "#";
+    op_stack.push_back('#');
+    st_stack.push_back(0);
+    pl_stack.push_back("$");
+    int steps = 1;
+    for (int i = 0; i < src.length(); i++)
+    {
+        char u = src[i];
+        int top = st_stack[st_stack.size() - 1];
+        Content &act = action[top][u]; // u隐式转化为int，故可以被索引
+        // cout << "YES : " << i << " " << u << " " << top << " " << act.type << endl;
+        if (act.type == 0)
+        {
+            print(get_steps(steps++), get_stk(op_stack), src.substr(i), "shift", get_stk(st_stack), act.out, "");
+            op_stack.push_back(u);
+            pl_stack.push_back("$");
+            st_stack.push_back(act.num);
+        }
+        else if (act.type == 1)
+        {
+            WF &tt = wf[act.num];
+            int y = st_stack[st_stack.size() - tt.right.length() - 1];
+            int x = Goto[y][tt.left[0]];
+            // cout << y << " " << tt.left[0] << " " << x << endl;
+            print(get_steps(steps++), get_stk(op_stack), src.substr(i), get_shift(tt), get_stk(st_stack), act.out, get_steps(x));
+
+            //对op_stack栈顶的几个元素进行规约
+            // for (int j = 0; j < tt.right.length(); j++)
+            // {
+            //     st_stack.pop_back();
+            //     op_stack.pop_back();
+            // }
+            // op_stack.push_back(tt.left[0]);
+            // st_stack.push_back(x);
+
+            //生成翻译语句
+            string var1, var2;
+            switch(act.num){
+                case 0:
+                    //S->E
+                    for(int j = 0; j < 1; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                    }
+                    var_tmp = pl_stack.back();
+                    pl_stack.pop_back();
+                    
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 1:
+                    //E->E+T
+                    for(int j = 0; j < 3; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                    }
+                    var1 = pl_stack.back();
+                    pl_stack.pop_back();
+                    pl_stack.pop_back();
+                    var2 = pl_stack.back(); 
+                    pl_stack.pop_back();    
+                    var_tmp = "t" + to_string(var_num++);
+
+                    result.push_back(var_tmp + "=" + var2 + "+" + var1 + ";");
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 2:
+                    //E->T
+                    for(int j = 0; j < 1; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                    }
+                    var_tmp = pl_stack.back();
+                    pl_stack.pop_back();
+                    
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 3:
+                    //T->T*F
+                    for(int j = 0; j < 3; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                    }
+                    var1 = pl_stack.back();
+                    pl_stack.pop_back();
+                    pl_stack.pop_back();
+                    var2 = pl_stack.back(); 
+                    pl_stack.pop_back();    
+                    var_tmp = "t" + to_string(var_num++);
+
+                    result.push_back(var_tmp + "=" + var2 + "*" + var1 + ";");
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 4:
+                    //T->F
+                    for(int j = 0; j < 1; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                    }
+                    var_tmp = pl_stack.back();
+                    pl_stack.pop_back();
+                    
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 5:
+                    //F->(E)
+                    for(int j = 0; j < 3; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                    }
+                    pl_stack.pop_back();
+                    var_tmp = pl_stack.back();
+                    pl_stack.pop_back();
+                    pl_stack.pop_back();
+                    
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 6:
+                    //F->a
+                    for(int j = 0; j < 1; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                        pl_stack.pop_back();
+                    }
+                    var_tmp = "t" + to_string(var_num++);
+                    result.push_back(var_tmp + "=a;");
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 7:
+                    //F->b
+                    for(int j = 0; j < 1; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                        pl_stack.pop_back();
+                    }
+                    var_tmp = "t" + to_string(var_num++);
+                    result.push_back(var_tmp + "=b;");
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+                case 8:
+                    //F->c
+                    for(int j = 0; j < 1; j ++){
+                        st_stack.pop_back();
+                        op_stack.pop_back();
+                        pl_stack.pop_back();
+                    }
+                    var_tmp = "t" + to_string(var_num++);
+                    result.push_back(var_tmp + "=c;");
+                    op_stack.push_back(tt.left[0]);
+                    st_stack.push_back(x);
+                    pl_stack.push_back(var_tmp);
+                    break;
+            }
+
+            i--;
+        }
+        else if (act.type == 2)
+        {
+            print(get_steps(steps++), get_stk(op_stack), src.substr(i), "Accept", get_stk(st_stack), act.out, "");
+            // i--;
+        }
+        else
+            continue;
+    }
+}
+
 int main()
 {
     int n;
@@ -800,7 +990,12 @@ int main()
     make_V();
     make_go();
     make_table();
-    analyse(str);
+    //analyse(str);
+    analyse_and_translate(str);
+    puts("-------------翻译结果------------");
+    for(int i = 0; i < result.size(); i++){
+        cout << result[i] << endl;
+    }
 }
 
 /*
