@@ -9,6 +9,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <stack>
 #define MAX 507
 #define DEBUG
 using namespace std;
@@ -960,6 +961,66 @@ void analyse_and_translate(string src)
     }
 }
 
+bool isOperator(char c) {
+    return (c == '+' || c == '-' || c == '*' || c == '/');
+}
+
+bool isOperand(char c) {
+    // 判断是否是操作数，这里假设操作数是单个字符变量
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+bool checkExpression(const std::string& exp) {
+    std::stack<char> s;
+    bool lastWasOperator = false;
+    bool lastWasOperand = false;
+
+    for (int i = 0; i < exp.length(); i++) {
+        char c = exp[i];
+
+        if (c == ' ') continue;  // 忽略空格
+
+        if (isOperator(c)) {
+            if (lastWasOperator || i == 0) {
+                std::cout << "Error: Missing operand before operator " << c << std::endl;
+                return false;
+            }
+            lastWasOperator = true;
+            lastWasOperand = false;
+        } else if (isOperand(c)) {
+            lastWasOperator = false;
+            lastWasOperand = true;
+        } else if (c == '(') {
+            s.push(c);
+            lastWasOperator = false;  // '(' 后可以直接跟操作符
+            lastWasOperand = false;
+        } else if (c == ')') {
+            if (s.empty() || s.top() != '(') {
+                std::cout << "Error: Unmatched parenthesis" << std::endl;
+                return false;
+            }
+            s.pop();
+            lastWasOperand = true;  // ')' 后应当有操作符，除非是表达式的结束
+        } else {
+            std::cout << "Error: Invalid character " << c << std::endl;
+            return false;
+        }
+    }
+
+    if (!s.empty()) {
+        std::cout << "Error: Mismatched parenthesis" << std::endl;
+        return false;
+    }
+
+    if (lastWasOperator) {
+        std::cout << "Error: Missing operand after operator "  << exp[exp.length() - 1] << std::endl;
+        return false;
+    }
+
+    std::cout << "Expression is valid" << std::endl;
+    return true;
+}
+
 int main()
 {
     int n;
@@ -983,6 +1044,11 @@ int main()
     cout << "请输入输入串:" << endl;
     cin >> str;
     // cout << "YES" << endl;
+
+    if(checkExpression(str) == false){
+        return 0;
+    }
+
     make_item();
     make_first();
     make_follow();
@@ -996,6 +1062,8 @@ int main()
     for(int i = 0; i < result.size(); i++){
         cout << result[i] << endl;
     }
+
+    return 0;
 }
 
 /*
